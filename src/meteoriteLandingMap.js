@@ -23,6 +23,29 @@ function addPoints(geoData, projection, points, index, batchSize = 100) {
             .attr("fill", "red")
             .attr("stroke", "#000")
             .attr("stroke-width", 0.5)
+            .on("mouseover", function(event, d) {
+                // Modify Tooltip Element
+                d3.select("#tooltip")
+                  .style("left", (event.pageX + 5) + "px")
+                  .style("top", (event.pageY + 5) + "px")
+                  .select("span")
+                  .text(`${d.properties.name}, ${d.properties.year}`);
+                // Set Visible
+                d3.select("#tooltip").classed("hidden", false);
+                // Highlight black
+                d3.select(this)
+                  .attr("fill", "black")
+                  .attr("r", 6);
+            })
+            .on("mouseout", function() {
+                // Set Invisible
+                d3.select("#tooltip").classed("hidden", true);
+
+                // Reset point to defaults
+                d3.select(this)
+                  .attr("fill", "brown")
+                  .attr("r", 2);
+            })
             .transition()
             .duration(500)
             .attr("r", 2)

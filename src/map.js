@@ -1,37 +1,8 @@
-// Import utilities
-import * as dataUtils from '../utils/dataUtils.js';
+/*
 
-// Function to help add points to the map
-function addPoints(geoData, projection, points, index, batchSize = 100) {
-    if (index >= points.length) return;
-    //console.log(`Adding points starting from index: ${index} ${geoData.features[index].properties.year}`);
+Base Mercator Map Implementation
 
-    const svg = d3.select('#map g');
-    const endIndex = Math.min(index + batchSize, points.length);
-
-    // Batch for performance
-    for (let i = index; i < endIndex; i++) {
-        let coords = projection(points[i].geometry.coordinates);
-
-        // Add a circle for each point
-        svg.append("circle")
-            .datum(points[i])
-            .attr("cx", coords[0])
-            .attr("cy", coords[1])
-            .attr("r", 0)
-            .attr("fill", "red")
-            .attr("stroke", "#000")
-            .attr("stroke-width", 0.5)
-            .transition()
-            .duration(500)
-            .attr("r", 2)
-            .transition()
-            .duration(2000)
-            .attr("fill", "brown");
-    }
-
-    setTimeout(() => addPoints(geoData, projection, points, endIndex, batchSize), 80);
-}
+*/
 
 // Render the map itself with countries drawn and controls added
 async function drawWorldMap() {
@@ -94,21 +65,5 @@ async function drawWorldMap() {
     return projection;
 }
 
-// Function to draw the specific details of the current map
-async function drawMap(projection) {
-    console.log("Drawing Map");
-    const geoData = await dataUtils.loadGeoData();    
-    
-    geoData.features.sort((a, b) => a.properties.year - b.properties.year);
-    
-    let topojsonData = topojson.topology({points: geoData});
-    let points = topojson.feature(topojsonData, topojsonData.objects.points).features;
-    console.log(points.length)
-        
-    addPoints(geoData, projection, points, 0);
-
-}
-
-// Function entrypoint
-let p = await drawWorldMap();
-drawMap(p);
+// Export functions for module use
+export { drawWorldMap };

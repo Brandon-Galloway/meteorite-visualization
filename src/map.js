@@ -15,8 +15,9 @@ async function drawWorldMap() {
 
     // Generate D3 Mercator Map
     const svg = d3.select('#map').attr("width", width).attr("height", height)
-    .call(d3.zoom().scaleExtent([1, 8]).on("zoom", zoomed))
-    .append("g");
+    .call(d3.zoom().scaleExtent([1, 8]).on("zoom", zoomed));
+
+    const g = svg.select("g");
     const projection = d3.geoMercator();
     const path = d3.geoPath().projection(projection);
 
@@ -25,7 +26,7 @@ async function drawWorldMap() {
         // Re-fetch container sizing
         const width = container.clientWidth;
         const height = container.clientHeight;
-        svg.attr("width", width).attr("height", height);
+        g.attr("width", width).attr("height", height);
     
         // Re-project
         projection
@@ -33,10 +34,10 @@ async function drawWorldMap() {
             .translate([width / 2, height / 2]);
     
         // Re-draw
-        svg.selectAll("path")
+        g.selectAll("path")
             .attr("d", path);
 
-        svg.selectAll("circle").each(function(d) {
+            g.selectAll("circle").each(function(d) {
             let coords = projection(d.geometry.coordinates);
             d3.select(this)
                 .attr("cx", coords[0])
@@ -47,7 +48,7 @@ async function drawWorldMap() {
     scaleMap();
     
     // Render Countries
-    svg.append("path")
+    g.append("path")
         .datum(topojson.feature(worldData, worldData.objects.countries))
         .attr("d", path)
         .attr("fill", "#cccccc")
@@ -59,7 +60,7 @@ async function drawWorldMap() {
         scaleMap();
     });
     function zoomed(event) {
-        svg.attr("transform", event.transform);
+        g.attr("transform", event.transform);
     }
 
     return projection;

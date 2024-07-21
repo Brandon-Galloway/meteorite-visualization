@@ -25,23 +25,23 @@ async function drawWorldMap() {
     function scaleMap() {
         // Re-fetch container sizing
         const width = container.clientWidth;
-        const height = container.clientHeight;
-        g.attr("width", width).attr("height", height);
-    
+        const height = container.clientHeight;    
+        
         // Re-project
         projection
             .scale(width / 2 / Math.PI)
             .translate([width / 2, height / 2]);
     
         // Re-draw
+        g.attr("width", width).attr("height", height);
         g.selectAll("path")
             .attr("d", path);
 
-            g.selectAll("circle").each(function(d) {
-            let coords = projection(d.geometry.coordinates);
-            d3.select(this)
-                .attr("cx", coords[0])
-                .attr("cy", coords[1]);
+        g.selectAll("circle").each(function(d) {
+        const coords = projection(d.geometry.coordinates);
+        d3.select(this)
+            .attr("cx", coords[0])
+            .attr("cy", coords[1]);
         });
     }
     // Initial Scale

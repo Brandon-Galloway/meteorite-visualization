@@ -2,45 +2,31 @@
 import * as map from './map.js';
 import * as dataUtils from '../utils/dataUtils.js';
 
-
 // Global Parameters
 const svg = await d3.select('#map g');
 let animationPaused = false;
-let currentIndex = 0;
-let points = [];
+let currentYear = 0;
 let timer;
 let projection;
+const yearSpan = [1900,2013]
 
 // Function to help add points to the map
-function addPoints(startIndex, batchSize = 100, delay= 150) {
-  // TODO examine type confusion
-  startIndex = parseInt(startIndex);
-  //batchSize = parseInt(batchSize);
-  
-  // Break if outside bounds
-  if (startIndex >= points.length) return;
-  
-  // Batch for performance
-  const endIndex = Math.min(startIndex + batchSize, points.length);
-  for (let i = startIndex; i < endIndex; i++) {
-     // Make circle visible with animation for each point
-    svg.select(`circle:nth-child(${i + 1})`)
-        .transition()
-        .delay(Math.floor(startIndex/endIndex * delay))
-        .duration(700)
-        .attr("r", 2)
-        .transition()
-        .delay(Math.floor(startIndex/endIndex * delay))
-        .duration(2000)
-        .attr("fill", "brown");
-  }
-  // TODO replace with year
-  currentIndex = endIndex;
-  d3.select("#slider").property("value", currentIndex);
+function addPoints(year, delay = 500) {
+  d3.select("#yearDisplay").text(`${year}`);
 
-  // TODO updates for performance and year
-  if (!animationPaused) {
-      timer = setTimeout(() => addPoints(endIndex), delay);
+  const circles = svg.selectAll("circle").filter((d, i) => d.properties.year == year);
+  circles.transition()
+  .delay((d, i) => (i / circles.size()) * delay)
+  .duration(700)
+  .attr("r", 2)
+  .transition()
+  .duration(2000)
+  .attr("fill", "brown");
+
+  d3.select("#slider").property("value", year);
+
+  if (!animationPaused && year < yearSpan[1]) {
+    timer = setTimeout(() => addPoints(year+1), delay);
   }
 }
 
@@ -50,54 +36,72 @@ async function drawFeatures() {
   const geoData = await dataUtils.loadGeoData();
   geoData.features.sort((a, b) => a.properties.year - b.properties.year);
   
+  //Create year-to-index mapping
+  let yearToIndex = {};
+  for (let index = geoData.features.length - 1; index >= 0; index--) {
+    const year = geoData.features[index].properties.year;
+    if (!(year in yearToIndex)) {
+      yearToIndex[year] = index;
+    }
+  }
+
   // Topojson Translation
   let topojsonData = topojson.topology({points: geoData});
-  points = topojson.feature(topojsonData, topojsonData.objects.points).features;
-
+  let points = topojson.feature(topojsonData, topojsonData.objects.points).features;
+  // slice to 1900 - 2013
+  points = points.slice(yearToIndex[yearSpan[0]],yearToIndex[2101]-1)
   // Add all points initially, but keep them invisible (performance)
   points.forEach(point => {
-      let coords = projection(point.geometry.coordinates);
-      svg.append("circle")
-        .datum(point)
-        .attr("cx", coords[0])
-        .attr("cy", coords[1])
-        .attr("r", 0)
-        .attr("fill", "red")
-        .attr("stroke", "#000")
-        .attr("stroke-width", 0.5)
-        .on("mouseover", function(event, d) {
-          // Modify Tooltip Element
-          d3.select("#tooltip")
-            .style("left", (event.pageX + 5) + "px")
-            .style("top", (event.pageY + 5) + "px")
-            .select("span")
-            .text(`${d.properties.name}, ${d.properties.year}`);
-          // Set Visible
-          d3.select("#tooltip").classed("hidden", false);
-          // Highlight black
-          d3.select(this)
-            .attr("fill", "black")
-            .attr("r", 6);
-        })
-        .on("mouseout", function() {
-          // Set Invisible  
-          d3.select("#tooltip").classed("hidden", true);
-          d3.select(this)
-            .attr("fill", "brown")
-            .attr("r", 2);
-        });
+    let coords = projection(point.geometry.coordinates);
+    svg.append("circle")
+      .datum(point)
+      .attr("cx", coords[0])
+      .attr("cy", coords[1])
+      .attr("r", 0)
+      .attr("fill", "red")
+      .attr("stroke", "#000")
+      .attr("stroke-width", 0.5)
+      .on("mouseover", function(event, d) {
+        // Modify Tooltip Element
+        d3.select("#tooltip")
+          .style("left", (event.pageX + 5) + "px")
+          .style("top", (event.pageY + 5) + "px")
+          .select("span")
+          .text(`${d.properties.name}, ${d.properties.year}`);
+        // Set Visible
+        d3.select("#tooltip").classed("hidden", false);
+        // Highlight black
+        d3.select(this)
+          .attr("fill", "black")
+          .attr("r", 6);
+      })
+      .on("mouseout", function() {
+        // Set Invisible  
+        d3.select("#tooltip").classed("hidden", true);
+        d3.select(this)
+          .attr("fill", "brown")
+          .attr("r", 2);
+      });
   });
+
+  // Add text element for displaying current year
+  svg.append("text")
+    .attr("id", "yearDisplay")
+    .attr("x", 10)
+    .attr("y", 40)
+    .attr("font-size", "42px")
+    .attr("fill", "black");
 
   // Start animation
   updateSlider();
-  addPoints(0);
+  addPoints(yearSpan[0]);
 
 }
 
 function updateSlider() {
   // Init slider
   const slider = d3.select("#slider");
-  slider.attr("max", points.length - 1);
+  const yearDisplay = d3.select("#yearDisplay");
 
   // Register slide trigger
   slider.on("input", function () {
@@ -106,29 +110,24 @@ function updateSlider() {
     animationPaused = true;
     d3.select("#pauseButton").text("Resume");
     
-    // Set the currentIndex to the slider selection
-    currentIndex = this.value;
+    // Set the currentYear to the slider selection
+    currentYear = parseInt(this.value);
 
-    // Update all circles visibility
+    // Update year display
+    yearDisplay.text(`${currentYear}`);
+
+    // Update all circles visibility (performance)
     const circles = svg.selectAll("circle");
-    circles.each(function(d, i) {
-      // Grab the current circle
-      const circle = d3.select(this);
-      if (i <= currentIndex) {
-        // Set visible
-        let coords = projection(points[i].geometry.coordinates);
-        circle.attr("cx", coords[0])
-          .attr("cy", coords[1])
-          .attr("r", 2)
-          .attr("fill", "brown");
-        } else {
-          // Set invisible
-          circle.attr("r", 0).attr("fill", "red");
-        }
+
+    circles.attr("r", function(d) {
+      return d.properties.year <= currentYear ? 2 : 0;
+    }).attr("fill", function(d) {
+      return d.properties.year <= currentYear ? "brown" : "red";
     });
   });
-}
 
+  yearDisplay.text(`Year: ${slider.property("value")}`);
+}
 
 projection = await map.drawWorldMap();
 
@@ -136,11 +135,11 @@ projection = await map.drawWorldMap();
 d3.select("#pauseButton").on("click", function() {
   animationPaused = !animationPaused;
   if (animationPaused) {
-      clearTimeout(timer);
-      d3.select(this).text("Resume");
+    clearTimeout(timer);
+    d3.select(this).text("Resume");
   } else {
-      d3.select(this).text("Pause");
-      addPoints(currentIndex);
+    d3.select(this).text("Pause");
+    addPoints(currentYear);
   }
 });
 

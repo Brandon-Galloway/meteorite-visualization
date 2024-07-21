@@ -3,17 +3,18 @@ import * as map from './map.js';
 import * as dataUtils from '../utils/dataUtils.js';
 
 // Global Parameters
+const yearSpan = [1900,2013];
 const svg = await d3.select('#map g');
 let animationPaused = false;
 let currentYear = 0;
 let timer;
 let projection;
-const yearSpan = [1900,2013]
 
 // Function to help add points to the map
 function addPoints(year, delay = 500) {
   d3.select("#yearDisplay").text(`${year}`);
 
+  // Add all circles with a position-proportional delay
   const circles = svg.selectAll("circle").filter((d, i) => d.properties.year == year);
   circles.transition()
   .delay((d, i) => (i / circles.size()) * delay)
@@ -23,10 +24,98 @@ function addPoints(year, delay = 500) {
   .duration(2000)
   .attr("fill", "brown");
 
+  // Update year-step items
+  updateAnnotation(year);
   d3.select("#slider").property("value", year);
 
   if (!animationPaused && year < yearSpan[1]) {
     timer = setTimeout(() => addPoints(year+1), delay);
+  }
+}
+
+// Function to manage d3 annotations
+async function updateAnnotation(year) {
+  // Grab our currently visible points and find smallest/largest
+  const visiblePoints = svg.selectAll("circle").filter((d) => d.properties.year <= year).data();
+  if (visiblePoints.length > 0) {
+    let largestMeteorite = visiblePoints[0];
+    let smallestMeteorite = visiblePoints[0];
+    for (const point of visiblePoints) {
+      if (+point.properties.mass > +largestMeteorite.properties.mass) {
+        largestMeteorite = point;
+      }
+      if (+point.properties.mass < +smallestMeteorite.properties.mass && +point.properties.mass > 0) {
+        smallestMeteorite = point;
+      }
+  }
+    
+    
+  // Purge previous annoatations and rebuild
+  svg.selectAll(".annotations").remove();
+
+  // Project coords
+  const largestCoords = projection(largestMeteorite.geometry.coordinates);
+  const smallestCoords = projection(smallestMeteorite.geometry.coordinates);
+
+  // Build annotations
+  const annotations = [
+    {
+      note: {
+        title: "Largest Recorded",
+        label: `${largestMeteorite.properties.name}\nMass: ${largestMeteorite.properties.mass}g\n`,
+        align: "middle"
+      },
+      type: d3.annotationsCallout,
+      color: ["#000000"],
+      x: largestCoords[0],
+      y: largestCoords[1],
+      dx: 100,
+      dy: -50,
+      subject: {
+        radius: 10,
+        radiusPadding: 10
+      }
+    },
+    {
+      note: {
+        title: "Smallest Recorded",
+        label: `${smallestMeteorite.properties.name}\nMass: ${smallestMeteorite.properties.mass}g\n`,
+        align: "middle"
+      },
+      type: d3.annotationsCallout,
+      color: ["#000000"],
+      x: smallestCoords[0],
+      y: smallestCoords[1],
+      dx: 100,
+      dy: 50,
+      subject: {
+        radius: 10,
+        radiusPadding: 10
+      }
+    }
+  ];
+
+    const makeAnnotations = d3.annotation().annotations(annotations);
+    svg.append("g").call(makeAnnotations);
+
+    d3.selectAll('.annotation-note')
+    .style('fill', 'black')
+    .style('font-weight', 'bold')
+    .raise();
+
+    // All yellow impulse effect if we are animating
+    if (!animationPaused) {
+      svg.selectAll("circle")
+      .filter((d) => d === largestMeteorite)
+      .attr("fill", "yellow")
+      .attr("r",6)
+      .transition()
+      .duration(2000)
+      .attr("fill", "brown")
+      .attr("r",2);
+    }
+
+
   }
 }
 
@@ -67,7 +156,7 @@ async function drawFeatures() {
           .style("left", (event.pageX + 5) + "px")
           .style("top", (event.pageY + 5) + "px")
           .select("span")
-          .text(`${d.properties.name}, ${d.properties.year}`);
+          .html(`${d.properties.name}, ${d.properties.year}<br>Mass: ${d.properties.mass}g`);
         // Set Visible
         d3.select("#tooltip").classed("hidden", false);
         // Highlight black
@@ -85,7 +174,7 @@ async function drawFeatures() {
   });
 
   // Add text element for displaying current year
-  svg.append("text")
+  d3.select('#map').append("text")
     .attr("id", "yearDisplay")
     .attr("x", 10)
     .attr("y", 40)
@@ -124,8 +213,8 @@ function updateSlider() {
     }).attr("fill", function(d) {
       return d.properties.year <= currentYear ? "brown" : "red";
     });
+    updateAnnotation(currentYear);
   });
-
   yearDisplay.text(`Year: ${slider.property("value")}`);
 }
 

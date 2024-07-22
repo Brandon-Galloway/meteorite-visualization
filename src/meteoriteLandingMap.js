@@ -1,6 +1,8 @@
 // Import utilities
 import * as map from './map.js';
 import * as dataUtils from '../utils/dataUtils.js';
+import * as utils from '../utils/utils.js';
+
 
 // Global Parameters
 const yearSpan = [1900,2013];
@@ -58,7 +60,8 @@ async function calculateLandings(year) {
 }
 
 // Function to help add points to the map
-async function addPoints(year, delay = 500) {
+async function addPoints(year, delay = 1000) {
+  currentYear = year;
   await calculateLandings(year);
   d3.select("#yearDisplay").text(`${year}`);
 
@@ -71,18 +74,13 @@ async function addPoints(year, delay = 500) {
   .attr("fill", "brown");
 
   // Update year-step items
-  updateAnnotation(year);
+  await addSizeAnnotations();
+  addUSAnnotation();
   d3.select("#slider").property("value", year);
 
   if (!animationPaused && year < yearSpan[1]) {
     timer = setTimeout(() => addPoints(year+1), delay);
   }
-}
-
-// Function to manage d3 annotations
-async function updateAnnotation(year) {  
-  addSizeAnnotations();
-  addUSAnnotation();
 }
 
 async function addSizeAnnotations() {      
@@ -140,7 +138,7 @@ async function addSizeAnnotations() {
     .raise();
 
     // All yellow impulse effect if we are animating
-    if (!animationPaused) {
+    if (!animationPaused && +currentYear === +landings.largest.properties.year) {
       d3.select(`#id-${landings.largest.properties.id}`)
       .attr("fill", "yellow")
       .attr("r", 6)
@@ -283,41 +281,47 @@ async function drawFeatures() {
 
 }
 
+// TODO more elegant solution?
+let sliderLock = false;
 function updateSlider() {
   // Init slider
   const slider = d3.select("#slider");
   const yearDisplay = d3.select("#yearDisplay");
 
   // Register slide trigger
-  slider.on("input", async function () {
-    // Clear points timer and pause  
-    if (!animationPaused) {
-      clearTimeout(timer);
-      animationPaused = true;
-      d3.select("#pauseButton").text("Resume");
-    }
-
-    // Set the currentYear to the slider selection
-    currentYear = parseInt(this.value);
-    yearDisplay.text(`${currentYear}`);
-    await calculateLandings(currentYear);
-
-    // Update visible circles
-    landings.visible
-      .attr("r", 2)
-      .attr("fill", "brown");
-
-    // Update invisible circles
-    landings.invisible
-      .attr("r", 0)
-      .attr("fill", "red");
-
-    d3.select('#map .us-outline-text').text(`US Landings: -`);
-    addSizeAnnotations();
-  });
+  const slideTrigger = utils.throttle(async function () {
+      if (!animationPaused) {
+          clearTimeout(timer);
+          animationPaused = true;
+          d3.select("#pauseButton").text("Resume");
+      }
+      
+      if(!sliderLock) {
+        currentYear = parseInt(slider.property("value"));
+        yearDisplay.text(`Year: ${currentYear}`);
+        await calculateLandings(currentYear);
+  
+        // Update visible circles
+        landings.visible
+            .attr("r", 2)
+            .attr("fill", "brown");
+  
+        // Update invisible circles
+        landings.invisible
+            .attr("r", 0)
+            .attr("fill", "red");
+  
+        await addSizeAnnotations();
+      }
+  }, 250);
+  slider.on("input", slideTrigger);
   // register slider end-adjustment trigger
   slider.on("change", async function () {
-    addUSAnnotation();
+    sliderLock = true;
+    currentYear = parseInt(slider.property("value"));
+    await calculateLandings(currentYear);
+    await addUSAnnotation();
+    sliderLock = false;
   });
   yearDisplay.text(`Year: ${slider.property("value")}`);
 }

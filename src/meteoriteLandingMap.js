@@ -19,31 +19,39 @@ let landings = {
   smallest: null
 }
 
-async function calculateLandings() {
-  // Cache all circles
-  const allCircles = svg.selectAll("circle");
-
+async function calculateLandings(year) {
   // Create an access mapping
   const circleMap = {
     visible: [],
     invisible: [],
-    current: []
+    current: [],
+    largest: null,
+    smallest: null
   };
 
   // Process each circle and classify them
-  allCircles.each(function(d) {
-    if (d.properties.year <= currentYear) {
+  landings.all.each(function(d) {
+    if (d.properties.year <= year) {
+      // Circle is visible
       circleMap.visible.push(this);
-      if (d.properties.year == currentYear) {
+      // Calculate current subset for performance
+      if (+d.properties.year == year) {
         circleMap.current.push(this);
+      }
+      // Check largest and smallest
+      if (!circleMap.largest || +d.properties.mass > +circleMap.largest.properties.mass) {
+        circleMap.largest = d;
+      }
+      if (!circleMap.smallest || (+d.properties.mass < +circleMap.smallest.properties.mass && +d.properties.mass > 0)) {
+        circleMap.smallest = d;
       }
     } else {
       circleMap.invisible.push(this);
     }
   });
-
   // return d3 types
-  landings.all = allCircles;
+  landings.largest = circleMap.largest;
+  landings.smallest = circleMap.smallest;
   landings.current = d3.selectAll(circleMap.current);
   landings.visible = d3.selectAll(circleMap.visible);
   landings.invisible = d3.selectAll(circleMap.invisible);
@@ -51,13 +59,11 @@ async function calculateLandings() {
 
 // Function to help add points to the map
 async function addPoints(year, delay = 500) {
-  //TODO await calculateLandings();
+  await calculateLandings(year);
   d3.select("#yearDisplay").text(`${year}`);
 
-  // Add all circles with a position-proportional delay
-  const circles = landings.all.filter((d, i) => d.properties.year == year);
-  circles.transition()
-  .delay((d, i) => (i / circles.size()) * delay)
+  landings.current.transition()
+  .delay((d, i) => (i / landings.current.size()) * delay)
   .duration(700)
   .attr("r", 2)
   .transition()
@@ -74,41 +80,25 @@ async function addPoints(year, delay = 500) {
 }
 
 // Function to manage d3 annotations
-async function updateAnnotation(year) {
-  const visiblePoints = landings.all.filter((d) => d.properties.year <= year);
-  
-  addSizeAnnotations(visiblePoints);
-  addUSAnnotation(visiblePoints);
+async function updateAnnotation(year) {  
+  addSizeAnnotations();
+  addUSAnnotation();
 }
 
-async function addSizeAnnotations(visiblePoints) {
-  if (!visiblePoints.empty()) {
-    let largestMeteorite = null;
-    let smallestMeteorite = null;
-  
-    visiblePoints.each((d) => {
-      if (!largestMeteorite || +d.properties.mass > +largestMeteorite.properties.mass) {
-        largestMeteorite = d;
-      }
-      if (!smallestMeteorite || (+d.properties.mass < +smallestMeteorite.properties.mass && +d.properties.mass > 0)) {
-        smallestMeteorite = d;
-      }
-    });
-    
-    
+async function addSizeAnnotations() {      
   // Purge previous annoatations and rebuild
   svg.selectAll(".annotations").remove();
 
   // Project coords
-  const largestCoords = projection(largestMeteorite.geometry.coordinates);
-  const smallestCoords = projection(smallestMeteorite.geometry.coordinates);
+  const largestCoords = projection(landings.largest.geometry.coordinates);
+  const smallestCoords = projection(landings.smallest.geometry.coordinates);
 
   // Build annotations
   const annotations = [
     {
       note: {
         title: "Largest Recorded",
-        label: `${largestMeteorite.properties.name}\nMass: ${largestMeteorite.properties.mass}g\n`,
+        label: `${landings.largest.properties.name}\nMass: ${landings.largest.properties.mass}g\n`,
         align: "middle"
       },
       type: d3.annotationsCallout,
@@ -125,7 +115,7 @@ async function addSizeAnnotations(visiblePoints) {
     {
       note: {
         title: "Smallest Recorded",
-        label: `${smallestMeteorite.properties.name}\nMass: ${smallestMeteorite.properties.mass}g\n`,
+        label: `${landings.smallest.properties.name}\nMass: ${landings.smallest.properties.mass}g\n`,
         align: "middle"
       },
       type: d3.annotationsCallout,
@@ -151,16 +141,14 @@ async function addSizeAnnotations(visiblePoints) {
 
     // All yellow impulse effect if we are animating
     if (!animationPaused) {
-      landings.all
-      .filter((d) => d === largestMeteorite)
+      d3.select(`#id-${landings.largest.properties.id}`)
       .attr("fill", "yellow")
-      .attr("r",6)
+      .attr("r", 6)
       .transition()
       .duration(2000)
       .attr("fill", "brown")
-      .attr("r",2);
+      .attr("r", 2);
     }
-}
 }
 
 //https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json
@@ -171,7 +159,7 @@ const usGeoJSON = {
 };
 
 
-async function addUSAnnotation(visiblePoints) {
+async function addUSAnnotation() {
   // us bounding box https://gist.github.com/graydon/11198540
   const usBB = {
     west: -125.0011,
@@ -193,7 +181,7 @@ async function addUSAnnotation(visiblePoints) {
     return (lat >= usBB.south && lat <= usBB.north && long >= usBB.west && long <= usBB.east);
   }
 
-  visiblePoints.filter((d) => isPointInUSBounds(d)).each(function() {
+  landings.visible.filter((d) => isPointInUSBounds(d)).each(function() {
     const cx = +d3.select(this).attr("cx");
     const cy = +d3.select(this).attr("cy");
     if (isPointInPath(cx, cy)) {
@@ -237,9 +225,11 @@ async function drawFeatures() {
   points = points.slice(yearToIndex[yearSpan[0]],yearToIndex[2101]-1)
   // Add all points initially, but keep them invisible (performance)
   points.forEach(point => {
+
     let coords = projection(point.geometry.coordinates);
     svg.append("circle")
       .datum(point)
+      .attr("id","id-"+point.properties.id)
       .attr("cx", coords[0])
       .attr("cy", coords[1])
       .attr("r", 0)
@@ -285,11 +275,11 @@ async function drawFeatures() {
     .attr("font-size", "42px")
     .attr("fill", "black");
 
-  await calculateLandings();
+  landings.all = svg.selectAll("circle");
 
   // Start animation
   updateSlider();
-  addPoints(yearSpan[0]);
+  await addPoints(yearSpan[0]);
 
 }
 
@@ -299,7 +289,7 @@ function updateSlider() {
   const yearDisplay = d3.select("#yearDisplay");
 
   // Register slide trigger
-  slider.on("input", function () {
+  slider.on("input", async function () {
     // Clear points timer and pause  
     if (!animationPaused) {
       clearTimeout(timer);
@@ -310,26 +300,24 @@ function updateSlider() {
     // Set the currentYear to the slider selection
     currentYear = parseInt(this.value);
     yearDisplay.text(`${currentYear}`);
-    const visiblePoints = landings.all.filter(d => d.properties.year <= currentYear);
-    const invisiblePoints = landings.all.filter(d => d.properties.year > currentYear);
+    await calculateLandings(currentYear);
 
     // Update visible circles
-    visiblePoints
+    landings.visible
       .attr("r", 2)
       .attr("fill", "brown");
 
     // Update invisible circles
-    invisiblePoints
+    landings.invisible
       .attr("r", 0)
       .attr("fill", "red");
 
     d3.select('#map .us-outline-text').text(`US Landings: -`);
-    addSizeAnnotations(visiblePoints);
+    addSizeAnnotations();
   });
   // register slider end-adjustment trigger
-  slider.on("change", function () {
-    const visiblePoints = landings.all.filter(d => d.properties.year <= currentYear);
-    addUSAnnotation(visiblePoints);
+  slider.on("change", async function () {
+    addUSAnnotation();
   });
   yearDisplay.text(`Year: ${slider.property("value")}`);
 }

@@ -59,14 +59,13 @@ class MercatorMap {
         this.g.selectAll("path")
             .attr("d", this.path);
 
-        this.g.selectAll("circle").each(function (d) {
-            const coords = this.projection(d.geometry.coordinates);
+        const proj = this.projection;
+        this.g.selectAll("circle").each(function(d) {
+            const coords = proj(d.geometry.coordinates);
             d3.select(this)
                 .attr("cx", coords[0])
                 .attr("cy", coords[1]);
-        }
-            // ensure scope
-            .bind(this));
+        });
     }
 
     zoomMap(event) {

@@ -20,6 +20,33 @@ html, body {
     background-color: #ccc;
     padding: 10px;
     box-sizing: border-box;
+
+    .page-number {
+      padding: 5px;
+    }
+    
+    .page-number.active {
+      font-weight: bold;
+      color: red; /* Highlight color */
+    }
+    
+    .page-number:hover {
+      text-decoration: underline;
+    }
+    
+    .selector-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .page-numbers {
+      display: flex;
+      align-items: center;
+    }
+    
+    svg {
+      vertical-align: middle;
+    }
   }
   .controls {
     flex: 0 0 75%;

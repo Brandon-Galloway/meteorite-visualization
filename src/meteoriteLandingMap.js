@@ -3,14 +3,17 @@ import * as map from './component/map.js';
 import * as dataUtils from '../utils/dataUtils.js';
 import * as utils from '../utils/utils.js';
 
+const baseMap = new map.MercatorMap("map");
+await baseMap.initialize();
+const svg = baseMap.g;
 
 // Global Parameters
 const yearSpan = [1900,2013];
-const svg = await d3.select('#map g');
+//const svg = await d3.select('#map g');
 let animationPaused = false;
 let currentYear = 0;
 let timer;
-let projection;
+let projection = baseMap.projection;
 
 let landings = {
   all: null,
@@ -320,7 +323,8 @@ function updateSlider() {
   yearDisplay.text(`Year: ${slider.property("value")}`);
 }
 
-projection = await map.drawWorldMap();
+//projection = await map.drawWorldMap();
+
 
 // Register pause/resume button trigger
 d3.select("#pauseButton").on("click", function() {

@@ -4,67 +4,75 @@ Base Mercator Map Implementation
 
 */
 
-// Render the map itself with countries drawn and controls added
-async function drawWorldMap() {
-    // Fetch data
-    const worldData = await d3.json("https://d3js.org/world-110m.v1.json");
-    const container = document.getElementById('map');
-    // Fit container
-    const width = container.clientWidth;
-    const height = container.clientHeight;
+class MercatorMap {
+    // Construct but don't init (performance)
+    constructor(containerId) {
+        this.containerId = containerId;
+        this.projection = d3.geoMercator();
+        this.svg = null;
+        this.g = null;
+        this.path = d3.geoPath().projection(this.projection);
+    }
 
-    // Generate D3 Mercator Map
-    const svg = d3.select('#map').attr("width", width).attr("height", height)
-    .call(d3.zoom().scaleExtent([1, 8]).on("zoom", zoomed));
-
-    const g = svg.select("g");
-    const projection = d3.geoMercator();
-    const path = d3.geoPath().projection(projection);
-
-    // Embedded function to update the map based on container size
-    function scaleMap() {
-        // Re-fetch container sizing
+    // Function to intialize the map
+    async initialize() {
+        // Fetch data
+        const worldData = await d3.json("https://d3js.org/world-110m.v1.json");
+        // Fit container
+        const container = document.getElementById(this.containerId);
         const width = container.clientWidth;
-        const height = container.clientHeight;    
-        
-        // Re-project
-        projection
-            .scale(width / 2 / Math.PI)
-            .translate([width / 2, height / 2]);
-    
-        // Re-draw
-        g.attr("width", width).attr("height", height);
-        g.selectAll("path")
-            .attr("d", path);
+        const height = container.clientHeight;
 
-        g.selectAll("circle").each(function(d) {
-        const coords = projection(d.geometry.coordinates);
-        d3.select(this)
-            .attr("cx", coords[0])
-            .attr("cy", coords[1]);
+        // Generate D3 Mercator Map
+        this.svg = d3.select(`#${this.containerId}`)
+            .attr("width", width)
+            .attr("height", height)
+            .call(d3.zoom().scaleExtent([1, 8]).on("zoom", this.zoomMap.bind(this)));
+
+        this.g = this.svg.append("g");
+        
+        this.g.append("path")
+            .datum(topojson.feature(worldData, worldData.objects.countries))
+            .attr("d", this.path)
+            .attr("fill", "#cccccc")
+            .attr("stroke", "#666666");
+        
+        this.scaleMap();
+        window.addEventListener('resize', () => {
+            console.log('Window resized');
+            this.scaleMap();
         });
     }
-    // Initial Scale
-    scaleMap();
-    
-    // Render Countries
-    g.append("path")
-        .datum(topojson.feature(worldData, worldData.objects.countries))
-        .attr("d", path)
-        .attr("fill", "#cccccc")
-        .attr("stroke", "#666666");
 
-    // Add listeners/callbacks
-    window.addEventListener('resize', () => {
-        console.log('Window resized');
-        scaleMap();
-    });
-    function zoomed(event) {
-        g.attr("transform", event.transform);
+    // Trigger to scale the map on window resize
+    scaleMap() {
+        const container = document.getElementById(this.containerId);
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        // Re-project
+        this.projection
+            .scale(width / 2 / Math.PI)
+            .translate([width / 2, height / 2]);
+
+        // Re-draw
+        this.svg.attr("width", width).attr("height", height);
+        this.g.selectAll("path")
+            .attr("d", this.path);
+
+        this.g.selectAll("circle").each(function(d) {
+            const coords = this.projection(d.geometry.coordinates);
+            d3.select(this)
+                .attr("cx", coords[0])
+                .attr("cy", coords[1]);
+        }
+        // ensure scope
+        .bind(this));
     }
 
-    return projection;
+    zoomMap(event) {
+        this.g.attr("transform", event.transform);
+    }
 }
 
 // Export functions for module use
-export { drawWorldMap };
+export { MercatorMap };

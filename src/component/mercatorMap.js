@@ -30,13 +30,13 @@ class MercatorMap {
             .call(d3.zoom().scaleExtent([1, 8]).on("zoom", this.zoomMap.bind(this)));
 
         this.g = this.svg.append("g");
-        
+
         this.g.append("path")
             .datum(topojson.feature(worldData, worldData.objects.countries))
             .attr("d", this.path)
             .attr("fill", "#cccccc")
             .attr("stroke", "#666666");
-        
+
         this.scaleMap();
         window.addEventListener('resize', () => {
             console.log('Window resized');
@@ -59,14 +59,14 @@ class MercatorMap {
         this.g.selectAll("path")
             .attr("d", this.path);
 
-        this.g.selectAll("circle").each(function(d) {
+        this.g.selectAll("circle").each(function (d) {
             const coords = this.projection(d.geometry.coordinates);
             d3.select(this)
                 .attr("cx", coords[0])
                 .attr("cy", coords[1]);
         }
-        // ensure scope
-        .bind(this));
+            // ensure scope
+            .bind(this));
     }
 
     zoomMap(event) {

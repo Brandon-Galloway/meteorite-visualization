@@ -27,14 +27,14 @@ html, body {
     
     .page-number.active {
       font-weight: bold;
-      color: red; /* Highlight color */
+      color: blue;
     }
     
     .page-number:hover {
       text-decoration: underline;
     }
     
-    .selector-container {
+    .selector {
       display: flex;
       align-items: center;
     }

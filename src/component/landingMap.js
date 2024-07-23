@@ -6,6 +6,7 @@ class LandingsMap {
   // Construct but don't init (performance)
   constructor(containerId) {
     this.containerId = containerId;
+    this.container = d3.select(`#${this.containerId}`);
     this.yearSpan = [1900,2013];
     this.animationPaused = false;
     this.currentYear = 0;
@@ -126,7 +127,7 @@ class LandingsMap {
     });
   
     // Add label for the count
-    d3.select('#map').append("text")
+    this.container.append("text")
       .attr("class", "us-outline-text")
       .attr("x", 10)
       .attr("y", 60)
@@ -144,12 +145,14 @@ class LandingsMap {
     this.landings.all = this.svg.selectAll("circle");
   
     // Start animation
-    await this.updateSlider();
     await this.addPoints(this.yearSpan[0]);
 
+    // Create the pause button control
+    const button = d3.select("#controls").insert("button", "input")
+    .attr('id','pauseButton')
+    .text("Pause");
 
-
-    d3.select("#pauseButton").on("click", function() {
+    button.on("click", function() {
       this.animationPaused = !this.animationPaused;
       if (this.animationPaused) {
         clearTimeout(this.timer);
@@ -159,6 +162,21 @@ class LandingsMap {
         this.addPoints(this.currentYear);
       }
     }.bind(this));
+
+    // Create the slider control
+    this.slider = d3.select("#controls").append("input")
+      .attr("type", "range")
+      .attr("id", "slider")
+      .attr("min", 1900)
+      .attr("max", 2013)
+      .attr("value", 1900)
+      .attr("step", 1);
+
+    // Register slide trigger
+    this.slider.on("input", this.onSliderUpdate.bind(this));
+    // register slider end-adjustment trigger
+    this.slider.on("change", this.onSliderRelease.bind(this));
+    this.yearDisplay.text(this.currentYear);
   }
 
   async calculateLandings(year) {
@@ -333,13 +351,6 @@ class LandingsMap {
     this.yearDisplay.text(`${this.currentYear}`);
   }
 
-  updateSlider() {
-    // Register slide trigger
-    this.slider.on("input", this.onSliderUpdate.bind(this));
-    // register slider end-adjustment trigger
-    this.slider.on("change", this.onSliderRelease.bind(this));
-    this.yearDisplay.text(this.currentYear);
-  }
 }
 
 export { LandingsMap };

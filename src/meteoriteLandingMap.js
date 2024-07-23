@@ -1,5 +1,5 @@
 // Import utilities
-import * as map from './map.js';
+import * as map from './component/map.js';
 import * as dataUtils from '../utils/dataUtils.js';
 import * as utils from '../utils/utils.js';
 
@@ -156,39 +156,16 @@ const usGeoJSON = {
   features: countriesGeoJSON.features.filter(feature => feature.properties.NAME !== "Alaska" && feature.properties.NAME !== "Hawaii" && feature.properties.NAME !== "Puerto Rico")
 };
 
-
 async function addUSAnnotation() {
-  // us bounding box https://gist.github.com/graydon/11198540
-  const usBB = {
-    west: -125.0011,
-    east: -66.9326,
-    south: 24.9493,
-    north: 49.5904
-  };
   svg.selectAll(".us-annotation").remove();
 
-  function isPointInPath(x, y) {
-    return svg.node().querySelector("path.us-outline").isPointInFill(new DOMPoint(x, y));
-  }
-  let count = 0;
+  const count = landings.visible
+  .filter(function() {
+    return d3.select(this).attr("data-us-bound") === "true";
+  })
+  .size();
 
-  function isPointInUSBounds(d) {
-    const lat = +d.properties.reclat;
-    const long = +d.properties.reclong;
-  
-    return (lat >= usBB.south && lat <= usBB.north && long >= usBB.west && long <= usBB.east);
-  }
-
-  landings.visible.filter((d) => isPointInUSBounds(d)).each(function() {
-    const cx = +d3.select(this).attr("cx");
-    const cy = +d3.select(this).attr("cy");
-    if (isPointInPath(cx, cy)) {
-      //d3.select(this).attr("fill", "green");
-      count++;
-    }
-  });
-  d3.select('#map .us-outline-text').text(`US Landings: ${count}`);;
-
+  d3.select('#map .us-outline-text').text(`US Landings: ${count}`);
 }
 
 
@@ -221,6 +198,27 @@ async function drawFeatures() {
   let points = topojson.feature(topojsonData, topojsonData.objects.points).features;
   // slice to 1900 - 2013
   points = points.slice(yearToIndex[yearSpan[0]],yearToIndex[2101]-1)
+  
+    // Define US bounding box
+    const usBB = {
+      west: -125.0011,
+      east: -66.9326,
+      south: 24.9493,
+      north: 49.5904
+    };
+  
+    // Function to check if a point is within US bounds
+    function isPointInUSBounds(d) {
+      const lat = +d.properties.reclat;
+      const long = +d.properties.reclong;
+      return (lat >= usBB.south && lat <= usBB.north && long >= usBB.west && long <= usBB.east);
+    }
+
+    function isPointInPath(x, y) {
+      return svg.node().querySelector("path.us-outline").isPointInFill(new DOMPoint(x, y));
+    }
+  
+  
   // Add all points initially, but keep them invisible (performance)
   points.forEach(point => {
 
@@ -234,6 +232,7 @@ async function drawFeatures() {
       .attr("fill", "red")
       .attr("stroke", "#000")
       .attr("stroke-width", 0.5)
+      .attr("data-us-bound", isPointInUSBounds(point) && isPointInPath(coords[0],coords[1]))
       .on("mouseover", function(event, d) {
         // Modify Tooltip Element
         d3.select("#tooltip")
@@ -282,46 +281,41 @@ async function drawFeatures() {
 }
 
 // TODO more elegant solution?
-let sliderLock = false;
 function updateSlider() {
   // Init slider
   const slider = d3.select("#slider");
   const yearDisplay = d3.select("#yearDisplay");
 
   // Register slide trigger
-  const slideTrigger = utils.throttle(async function () {
+  const slideTrigger = async function () {
       if (!animationPaused) {
           clearTimeout(timer);
           animationPaused = true;
           d3.select("#pauseButton").text("Resume");
       }
-      
-      if(!sliderLock) {
-        currentYear = parseInt(slider.property("value"));
-        yearDisplay.text(`Year: ${currentYear}`);
-        await calculateLandings(currentYear);
+      currentYear = parseInt(slider.property("value"));
+      yearDisplay.text(`${currentYear}`);
+      await calculateLandings(currentYear);
   
-        // Update visible circles
-        landings.visible
-            .attr("r", 2)
-            .attr("fill", "brown");
+      // Update visible circles
+      landings.visible
+        .attr("r", 2)
+        .attr("fill", "brown");
   
-        // Update invisible circles
-        landings.invisible
-            .attr("r", 0)
-            .attr("fill", "red");
+      // Update invisible circles
+      landings.invisible
+        .attr("r", 0)
+        .attr("fill", "red");
   
-        await addSizeAnnotations();
-      }
-  }, 250);
+      await addSizeAnnotations();
+  };
   slider.on("input", slideTrigger);
+  
   // register slider end-adjustment trigger
   slider.on("change", async function () {
-    sliderLock = true;
     currentYear = parseInt(slider.property("value"));
     await calculateLandings(currentYear);
     await addUSAnnotation();
-    sliderLock = false;
   });
   yearDisplay.text(`Year: ${slider.property("value")}`);
 }

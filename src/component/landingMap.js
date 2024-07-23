@@ -5,6 +5,7 @@ import * as dataUtils from '../utils/dataUtils.js';
 class LandingsMap {
   // Construct but don't init (performance)
   constructor(containerId) {
+    this.containerId = containerId;
     this.yearSpan = [1900,2013];
     this.animationPaused = false;
     this.currentYear = 0;
@@ -26,7 +27,7 @@ class LandingsMap {
 
   // Function to intialize the map
   async initialize() {
-    const baseMap = new map.MercatorMap("map");
+    const baseMap = new map.MercatorMap(this.containerId);
     await baseMap.initialize();
     this.projection = baseMap.projection;
     this.svg = baseMap.g;

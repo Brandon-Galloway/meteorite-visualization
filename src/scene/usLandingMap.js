@@ -23,7 +23,7 @@ class USLandingsMap {
   }
 
   highlightStatePoints(state) {
-    this.landings.visible
+    const relevantPoints = this.landings.visible
     .attr("stroke-width", 0)
     .attr("opacity",0.25)
     .filter(function() {
@@ -31,10 +31,15 @@ class USLandingsMap {
     })
     .attr('stroke-width',0.25)
     .attr('opacity',.5);
+
+    this.relevantPoints = relevantPoints.size();
+    d3.select("#hover-group text")
+    .text(this.relevantPoints);
   }
 
 
   selectedState = undefined;
+  relevantPoints = 0;
   // Function to intialize the map
   async initialize() {
     const baseMap = new map.MercatorMap(this.containerId);
@@ -46,17 +51,50 @@ class USLandingsMap {
     this.stateNames = baseMap.usGeoJSON.features.map(feature => feature.properties.NAME);
     this.svg.selectAll(".state-outline")
     .on("mouseover", function(event, d) {
+      // Parse the selected state
       this.selectedState = d.properties.NAME.toLowerCase().replace(/ /g, '-');
+      // Highlight the selected state
       d3.select(`#us-state-${this.selectedState}`)
           .attr("fill-opacity", 0.75);
+      // Run point highlights
       this.highlightStatePoints(this.selectedState);
+
+      // Create Tooltip for count of points
+      const bbox = d3.select(`#us-state-${this.selectedState}`).node().getBBox();
+      const hoverGroup = this.svg.append("g")
+      .attr("id", "hover-group");
+
+      hoverGroup.append("circle")
+        .attr("pointer-events", "none")
+        .attr("cx", bbox.x + bbox.width / 2)
+        .attr("cy", bbox.y + bbox.height / 2)
+        .attr("r", 4)
+        .attr("fill", "red")
+        .attr("stroke", "black")
+        .attr("stroke-width", .5);
+
+      hoverGroup.append("text")
+        .attr("pointer-events", "none")
+        .attr("x", bbox.x + bbox.width / 2)
+        .attr("y", bbox.y + bbox.height / 2)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", "5px")
+        .attr("font-weight", "bold")
+        .attr("fill", "black")
+        .text(this.relevantPoints);
     }.bind(this))
     .on("mouseout", function(event, d) {
+      // Null selected state and parse state
       this.selectedState = undefined;
       const state = d.properties.NAME.toLowerCase().replace(/ /g, '-');
+      // Revert the deselected state
       d3.select(`#us-state-${state}`)
           .attr("fill-opacity", 0);
+      // Run point highlights
       this.highlightStatePoints(this.selectedState);
+      // Destroy tooltip
+      d3.select("#hover-group").remove();
     }.bind(this));
 
 

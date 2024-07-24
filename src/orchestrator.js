@@ -1,5 +1,6 @@
-import {LandingsMap} from './component/landingMap.js';
-import { MercatorMap } from './component/mercatorMap.js';
+import {LandingsMap} from './scene/landingMap.js';
+// import { MercatorMap } from './component/mercatorMap.js';
+import { USLandingsMap } from './scene/usLandingMap.js';
 import {SceneSelector} from './component/sceneSelector.js';
 
 // Orchestrator to handle scene transitions
@@ -11,9 +12,6 @@ switch (scene) {
         await landingsMap.initialize();
         break;
     case 2:
-        const map = new MercatorMap("map");
+        const map = new USLandingsMap("map");
         map.initialize();
 }
-
-
-

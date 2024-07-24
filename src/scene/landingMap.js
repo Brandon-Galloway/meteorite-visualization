@@ -1,5 +1,5 @@
 // Import utilities
-import * as map from './mercatorMap.js';
+import * as map from '../component/mercatorMap.js';
 import * as dataUtils from '../utils/dataUtils.js';
 
 class LandingsMap {
@@ -22,10 +22,6 @@ class LandingsMap {
     }
   }
 
-  isPointInPath(x, y) {
-    return this.svg.node().querySelector("path.us-outline").isPointInFill(new DOMPoint(x, y));
-  }
-
   // Function to intialize the map
   async initialize() {
     const baseMap = new map.MercatorMap(this.containerId);
@@ -35,13 +31,6 @@ class LandingsMap {
 
     this.slider = d3.select("#slider");
     //this.yearDisplay = d3.select("#yearDisplay");
-
-    //https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json
-    const countriesGeoJSON = await d3.json('data/gz_2010_us_040_00_500k.json');
-    const usGeoJSON = {
-      type: "FeatureCollection",
-      features: countriesGeoJSON.features.filter(feature => feature.properties.NAME !== "Alaska" && feature.properties.NAME !== "Hawaii" && feature.properties.NAME !== "Puerto Rico")
-    };
 
     // Grab data
     const geoData = await dataUtils.loadGeoData();
@@ -56,39 +45,13 @@ class LandingsMap {
       }
     }
   
-    // Draw the US outline
-    this.svg.append("path")
-      .datum(usGeoJSON)
-      .attr("class", "us-outline")
-      .attr("d", d3.geoPath().projection(this.projection))
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", .5);
-  
     // Topojson Translation
     let topojsonData = topojson.topology({points: geoData});
     let points = topojson.feature(topojsonData, topojsonData.objects.points).features;
     // slice to 1900 - 2013
     points = points.slice(yearToIndex[this.yearSpan[0]],yearToIndex[2101]-1)
     
-      // Define US bounding box
-      const usBB = {
-        west: -125.0011,
-        east: -66.9326,
-        south: 24.9493,
-        north: 49.5904
-      };
-    
-      // Function to check if a point is within US bounds
-      function isPointInUSBounds(d) {
-        const lat = +d.properties.reclat;
-        const long = +d.properties.reclong;
-        return (lat >= usBB.south && lat <= usBB.north && long >= usBB.west && long <= usBB.east);
-      }
-  
 
-    
-    
     // Add all points initially, but keep them invisible (performance)
     points.forEach(point => {
   
@@ -102,7 +65,7 @@ class LandingsMap {
         .attr("fill", "red")
         .attr("stroke", "#000")
         .attr("stroke-width", 0.5)
-        .attr("data-us-bound", isPointInUSBounds(point) && this.isPointInPath(coords[0],coords[1]))
+        .attr("data-us-bound", baseMap.isPointInUSBounds(point))
         .on("mouseover", function(event, d) {
           // Modify Tooltip Element
           d3.select("#tooltip")

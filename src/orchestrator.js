@@ -1,5 +1,5 @@
 import {LandingsMap} from './scene/landingMap.js';
-// import { MercatorMap } from './component/mercatorMap.js';
+import { MercatorMap } from './component/mercatorMap.js';
 import { USLandingsMap } from './scene/usLandingMap.js';
 import {SceneSelector} from './component/sceneSelector.js';
 
@@ -12,6 +12,11 @@ switch (scene) {
         await landingsMap.initialize();
         break;
     case 2:
-        const map = new USLandingsMap("map");
-        map.initialize();
+        const usMap = new USLandingsMap("map");
+        await usMap.initialize();
+        break;
+    default:
+        const mm = new MercatorMap("map");
+        await mm.initialize();
+        break;
 }

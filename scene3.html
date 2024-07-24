@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Narrative Visualization</title>
+        <!-- Include Allowed Dependencies -->
+        <script src="https://d3js.org/d3.v6.min.js"></script>    
+        <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+        <script src="https://unpkg.com/topojson@3"></script>
+        <link rel="stylesheet" type="text/css" href="src/styles/styles.css">
+        <script>
+            const scene = 3;
+        </script>
+    </head>
+    <body>
+        <div class="viz">
+            <!-- Control Pane -->
+            <div class="nav-pane">
+                <div class="nav">
+                    <div id="selector"></div>
+                </div>
+                <div id="controls" class="controls">
+                </div>
+            </div>
+            <!-- Text & Content -->
+            <div class="content">
+                <div class="text">TODO</div>
+                <div class="visualization">
+                    <div id="tooltip" class="hidden"><span></span></div>
+                    <svg id="map" viewbox="0 0 960 600"></svg>
+                </div>
+        </div>
+        <!-- Load Custom Scripts -->
+        <script type="module" src="/src/orchestrator.js"></script>
+    </body>
+</html>

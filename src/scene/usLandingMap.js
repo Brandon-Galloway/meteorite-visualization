@@ -37,6 +37,73 @@ class USLandingsMap {
     .text(this.relevantPoints);
   }
 
+  // Function to add annotation to states
+  async addStateAnnotations() {
+    // Purge previous annotations and rebuild
+    this.svg.selectAll(".annotations").remove();
+
+    // Find the state with the most visible points
+    let mostVisibleState = null;
+    let maxCount = 0;
+    const stateCounts = {};
+    
+    this.landings.visible.each(function(d) {
+        const state = d3.select(this).attr("data-us-state");
+        stateCounts[state] = (stateCounts[state] || 0) + 1;
+    
+        // Check if the current state has the highest count
+        if (stateCounts[state] > maxCount) {
+            maxCount = stateCounts[state];
+            mostVisibleState = state;
+        }
+    });
+
+    const mostVisibleStateBounds = d3.select(`#us-state-${mostVisibleState}`).node().getBBox();
+    const annotation = [
+        {
+            note: {
+                title: `${mostVisibleState.toUpperCase()}`,
+                label: `Most Landings (${stateCounts[mostVisibleState]})\n`,
+                align: "left"
+            },
+            type: d3.annotationsCallout,
+            color: ["#000000"],
+            x: mostVisibleStateBounds.x + mostVisibleStateBounds.width / 2,
+            y:  mostVisibleStateBounds.y + mostVisibleStateBounds.height / 2,
+            dx: 150,
+            dy: -50,
+            subject: {
+                radius: 10,
+                radiusPadding: 10
+            }
+        }
+    ];
+
+    const makeAnnotations = d3.annotation().annotations(annotation);
+    this.svg.append("g").call(makeAnnotations);
+
+    d3.selectAll('.annotation-note')
+        .style('fill', 'black')
+        .style('font-weight', 'bold')
+        .raise();
+
+    // Highlight the state if we are animating
+    if (!this.animationPaused) {
+          // Toggle css with fade
+          d3.select(`#us-state-${mostVisibleState}`)
+          .classed('highlighted-state', true)
+          .classed('default-state', false)
+          .transition()
+          .duration(1000)
+          .on('end', function() {
+              d3.select(this)
+                  .classed('highlighted-state', false)
+                  .classed('default-state', true)
+          });
+    }
+}
+
+
 
   selectedState = undefined;
   relevantPoints = 0;
@@ -46,7 +113,7 @@ class USLandingsMap {
     await baseMap.initialize();
     this.projection = baseMap.projection;
     this.svg = baseMap.g;
-    
+      
     // TODO attempt to cleanup this mess!
     this.stateNames = baseMap.usGeoJSON.features.map(feature => feature.properties.NAME);
     this.svg.selectAll(".state-outline")
@@ -250,6 +317,7 @@ class USLandingsMap {
     await this.addStateAnnotation();
     d3.select("#slider").property("value", year);
     this.highlightStatePoints(this.selectedState);
+    this.addStateAnnotations();
   
     if (!this.animationPaused && year < this.yearSpan[1]) {
       this.timer = setTimeout(() => this.addPoints(year+1), delay);

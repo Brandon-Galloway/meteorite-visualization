@@ -19,7 +19,7 @@ class LandingsPie {
     findStateName(lat, long) {
         const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
         if (inUsBounds) {
-            for (const feature of this.geoData.features) {
+            for (const feature of this.usGeoJSON.features) {
                 if (d3.geoContains(feature, [long, lat])) {
                     return feature.properties.NAME.toLowerCase().replace(/ /g, '-');
                 }

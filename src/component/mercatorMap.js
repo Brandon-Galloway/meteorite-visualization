@@ -29,37 +29,23 @@ class MercatorMap {
         const lat = +point.properties.reclat;
         const long = +point.properties.reclong;
         const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
-        let coords = this.projection(point.geometry.coordinates);
-        return inUsBounds ? this.svg.node().querySelector("path.us-outline").isPointInFill(new DOMPoint(coords[0],coords[1])): false;
+        return inUsBounds ? d3.geoContains(this.usGeoJSON, [long, lat]): false;
     }
 
-    // Function to check if a point is within a specific us state's bounds
-    isPointInStateBounds(point,state) {
-        const lat = +point.properties.reclat;
-        const long = +point.properties.reclong;
-        const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
-        let coords = this.projection(point.geometry.coordinates);
-        return inUsBounds ? this.svg.node().querySelector(`#us-state-${state}`).isPointInFill(new DOMPoint(coords[0],coords[1])): false;
-    }
-
-    // Function to brute-force check which state a point falls within (expensive)
+    // Function to locate the state any given point belongs to (if-applicable)
     locateStateForPoint(point) {
         const lat = +point.properties.reclat;
         const long = +point.properties.reclong;
         const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
 
         if (inUsBounds) {
-            const dp = new DOMPoint(...this.projection([long, lat]));    
-            for (const state of this.usGeoJSON.features) {
-                const stateName = state.properties.NAME.toLowerCase().replace(/ /g, '-');
-                const statePath = this.svg.node().querySelector(`#us-state-${stateName}`);
-        
-                if (statePath.isPointInFill(dp)) {
-                    return stateName;
+            for (const feature of this.usGeoJSON.features) {
+                if (d3.geoContains(feature, [long, lat])) {
+                    return feature.properties.NAME.toLowerCase().replace(/ /g, '-');
                 }
             }
         }
-        return null;
+        return "Non-US";
     }
     
 

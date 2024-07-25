@@ -2,6 +2,7 @@ import {LandingsMap} from './scene/landingMap.js';
 import { MercatorMap } from './component/mercatorMap.js';
 import { USLandingsMap } from './scene/usLandingMap.js';
 import {SceneSelector} from './component/sceneSelector.js';
+import { LandingsPie } from './scene/landingClasses.js';
 
 // Orchestrator to handle scene transitions
 // TODO better way to handle switchout...currently a lot of dupe
@@ -16,7 +17,7 @@ switch (scene) {
         await usMap.initialize();
         break;
     default:
-        const mm = new MercatorMap("map");
-        await mm.initialize();
+        const pie = new LandingsPie("map");
+        await pie.initialize();
         break;
 }

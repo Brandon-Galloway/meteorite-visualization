@@ -96,7 +96,7 @@ class LandingsMap {
       .attr("font-size", "12px")
       .text(`US Count: 0`);
   
-      this.yearDisplay = d3.select('#map').append("text")
+      this.yearDisplay = this.container.append("text")
       .attr("id", "yearDisplay")
       .attr("x", 10)
       .attr("y", 40)
@@ -279,7 +279,7 @@ class LandingsMap {
     })
     .size();
   
-    d3.select('#map .us-outline-text').text(`US Landings: ${count}`);
+    this.container.select('.us-outline-text').text(`US Landings: ${count}`);
   }
 
   async onSliderUpdate() {

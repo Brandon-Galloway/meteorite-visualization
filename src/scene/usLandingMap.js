@@ -122,7 +122,8 @@ class USLandingsMap {
       this.selectedState = d.properties.NAME.toLowerCase().replace(/ /g, '-');
       // Highlight the selected state
       d3.select(`#us-state-${this.selectedState}`)
-          .attr("fill-opacity", 0.75);
+        .classed('highlighted-state', true)
+        .classed('default-state', false)
       // Run point highlights
       this.highlightStatePoints(this.selectedState);
 
@@ -157,7 +158,8 @@ class USLandingsMap {
       const state = d.properties.NAME.toLowerCase().replace(/ /g, '-');
       // Revert the deselected state
       d3.select(`#us-state-${state}`)
-          .attr("fill-opacity", 0);
+        .classed('highlighted-state', false)
+        .classed('default-state', true)
       // Run point highlights
       this.highlightStatePoints(this.selectedState);
       // Destroy tooltip
@@ -214,7 +216,7 @@ class USLandingsMap {
       .attr("fill", "blue")
       .attr("font-size", "12px")
       .text(`US Count: 0`);
-  
+      
       this.yearDisplay = d3.select('#map').append("text")
       .attr("id", "yearDisplay")
       .attr("x", 10)

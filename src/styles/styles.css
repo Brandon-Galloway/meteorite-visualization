@@ -70,12 +70,12 @@ html, body {
 
     .highlighted-state {
       fill-opacity: 0.75 !important;
-      transition: fill-opacity 0.5s ease;
+      transition: fill-opacity 0.25s ease;
     }
   
     .default-state {
         fill-opacity: 0;
-        transition: fill-opacity 0.5s ease;
+        transition: fill-opacity 0.25s ease;
     }
   
     svg {

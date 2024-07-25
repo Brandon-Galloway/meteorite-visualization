@@ -28,8 +28,6 @@ class LandingsMap {
     await baseMap.initialize();
     this.projection = baseMap.projection;
     this.svg = baseMap.g;
-
-    this.slider = d3.select("#slider");
     //this.yearDisplay = d3.select("#yearDisplay");
 
     // Grab data

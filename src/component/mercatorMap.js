@@ -76,7 +76,7 @@ class MercatorMap {
         };
 
         // Fit container
-        const container = document.getElementById(this.containerId);
+        const container = d3.select(`#${this.containerId}`).node();
         const width = container.clientWidth;
         const height = container.clientHeight;
 
@@ -126,7 +126,7 @@ class MercatorMap {
 
     // Trigger to scale the map on window resize
     scaleMap() {
-        const container = document.getElementById(this.containerId);
+        const container = d3.select(`#${this.containerId}`).node();
         const width = container.clientWidth;
         const height = container.clientHeight;
         // Re-project

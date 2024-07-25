@@ -4,6 +4,9 @@ Base Mercator Map Implementation
 
 */
 
+import * as dataUtils from '../utils/dataUtils.js';
+
+
 class MercatorMap {
 
     // Define a us bounding box (performance)
@@ -23,43 +26,13 @@ class MercatorMap {
         this.path = d3.geoPath().projection(this.projection);
     }
 
-        
-    // Function to check if a point is within US bounds
-    isPointInUSBounds(point) {
-        const lat = +point.properties.reclat;
-        const long = +point.properties.reclong;
-        const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
-        return inUsBounds ? d3.geoContains(this.usGeoJSON, [long, lat]): false;
-    }
-
-    // Function to locate the state any given point belongs to (if-applicable)
-    locateStateForPoint(point) {
-        const lat = +point.properties.reclat;
-        const long = +point.properties.reclong;
-        const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
-
-        if (inUsBounds) {
-            for (const feature of this.usGeoJSON.features) {
-                if (d3.geoContains(feature, [long, lat])) {
-                    return feature.properties.NAME.toLowerCase().replace(/ /g, '-');
-                }
-            }
-        }
-        return "Non-US";
-    }
-    
-
     // Function to intialize the map
     async initialize() {
         // Fetch data
         const worldData = await d3.json("https://d3js.org/world-110m.v1.json");
 
         //https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_500k.json
-        const countriesGeoJSON = await d3.json('data/gz_2010_us_040_00_500k.json');
-        this.usGeoJSON = {
-            type: "FeatureCollection",
-            features: countriesGeoJSON.features.filter(feature => feature.properties.NAME !== "Alaska" && feature.properties.NAME !== "Hawaii" && feature.properties.NAME !== "Puerto Rico")
-        };
+        this.usGeoJSON = await dataUtils.loadUSGeoData();
 
         // Fit container
         const container = d3.select(`#${this.containerId}`).node();

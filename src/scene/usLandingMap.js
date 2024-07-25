@@ -191,7 +191,7 @@ class USLandingsMap {
     
     // Add all points initially, but keep them invisible (performance)
     points.forEach(point => {
-      if (baseMap.isPointInUSBounds(point)) {
+      if (point.properties.state !== "Non-US") {
         let coords = this.projection(point.geometry.coordinates);
         this.svg.append("circle")
           .datum(point)
@@ -204,7 +204,7 @@ class USLandingsMap {
           .attr("opacity",0.25)
           .attr("stroke-width", 0)
           .attr("pointer-events", "none")
-          .attr("data-us-state", baseMap.locateStateForPoint(point));
+          .attr("data-us-state", point.properties.state);
       }
     });
   

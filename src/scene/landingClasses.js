@@ -2,30 +2,12 @@
 import * as dataUtils from '../utils/dataUtils.js';
 
 class LandingsPie {
-    usBB = {
-        west: -125.0011,
-        east: -66.9326,
-        south: 24.9493,
-        north: 49.5904
-    };
     // Construct but don't init (performance)
     constructor(containerId) {
         this.containerId = containerId;
         this.container = d3.select(`#${this.containerId}`);
         this.geoData = [];
         this.supperclassCounts = {};
-    }
-
-    findStateName(lat, long) {
-        const inUsBounds = (lat >= this.usBB.south && lat <= this.usBB.north && long >= this.usBB.west && long <= this.usBB.east);
-        if (inUsBounds) {
-            for (const feature of this.usGeoJSON.features) {
-                if (d3.geoContains(feature, [long, lat])) {
-                    return feature.properties.NAME.toLowerCase().replace(/ /g, '-');
-                }
-            }
-        }
-        return "Non-US";
     }
 
     updateData(state) {
@@ -50,18 +32,9 @@ class LandingsPie {
             type: "FeatureCollection",
             features: countriesGeoJSON.features.filter(feature => feature.properties.NAME !== "Alaska" && feature.properties.NAME !== "Hawaii" && feature.properties.NAME !== "Puerto Rico")
         };
-        this.geoData.forEach(point => {
-            const lat = point.reclat;
-            const long = point.reclong;
-
-            // Get the state name where the point is located
-            const stateName = this.findStateName(lat, long, this.usGeoJSON);
-            point.state = stateName;
-            console.log(`Meteorite at (${lat}, ${long}) is inside: ${stateName}`);
-        });
 
         // TODO add a UI selector
-        this.updateData('texas');
+        this.updateData('california');
 
 
         this.svg = this.container

@@ -63,7 +63,7 @@ class LandingsMap {
         .attr("fill", "red")
         .attr("stroke", "#000")
         .attr("stroke-width", 0.5)
-        .attr("data-us-bound", baseMap.isPointInUSBounds(point))
+        .attr("data-us-bound", point.properties.state !== "Non-US")
         .on("mouseover", function(event, d) {
           // Modify Tooltip Element
           d3.select("#tooltip")

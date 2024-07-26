@@ -39,6 +39,8 @@ class USLandingsMap {
 
   // Function to add annotation to states
   async addStateAnnotations() {
+    this.svg.selectAll(".us-annotation").remove();
+    this.container.select('.us-outline-text').text(`US Landings: ${this.landings.visible.size()}`);
     // Purge previous annotations and rebuild
     this.svg.selectAll(".annotations").remove();
 
@@ -255,8 +257,6 @@ class USLandingsMap {
 
     // Register slide trigger
     this.slider.on("input", this.onSliderUpdate.bind(this));
-    // register slider end-adjustment trigger
-    // this.slider.on("change", this.onSliderRelease.bind(this));
     this.yearDisplay.text(this.currentYear);
   }
 
@@ -315,7 +315,6 @@ class USLandingsMap {
     .attr("fill", "brown");
   
     // Update year-step items
-    await this.addStateAnnotation();
     d3.select("#slider").property("value", year);
     this.highlightStatePoints(this.selectedState);
     this.addStateAnnotations();
@@ -323,11 +322,6 @@ class USLandingsMap {
     if (!this.animationPaused && year < this.yearSpan[1]) {
       this.timer = setTimeout(() => this.addPoints(year+1), delay);
     }
-  }
-
-  async addStateAnnotation() {
-    this.svg.selectAll(".us-annotation").remove();
-    this.container.select('.us-outline-text').text(`US Landings: ${this.landings.visible.size()}`);
   }
 
   async onSliderUpdate() {
@@ -349,15 +343,9 @@ class USLandingsMap {
     this.landings.invisible
       .attr("r", 0)
       .attr("fill", "red");
-    await this.addStateAnnotation();
+    await this.addStateAnnotations();
 
   }
-
-  // async onSliderRelease() {
-  //   this.currentYear = parseInt(this.slider.property("value"));
-  //   await this.calculateLandings(this.currentYear);
-  //   this.yearDisplay.text(`${this.currentYear}`);
-  // }
 
 }
 

@@ -12,9 +12,10 @@ class LandingsPie {
 
     updateData(state) {
         const filteredData = state ? this.geoData.filter(point => point.state === state) : this.geoData;
+        const totalCount = filteredData.length;
         this.supperclassCounts = Array.from(
             d3.rollup(filteredData, i => i.length, m => m.superclass),
-            ([superclass, count]) => ({ superclass, count })
+            ([superclass, count]) => ({ superclass, count, percent: (count / totalCount * 100).toFixed(2) })
         );
         this.supperclassCounts.sort((a, b) => b.count - a.count);
         this.renderPieChart();
@@ -99,6 +100,7 @@ class LandingsPie {
                     const superclass = m.superclass;
                     this.deselect(superclass);
                 }.bind(this));
+                this.renderAnnotations();
         } else {
             // If no data is available. Print a message instead
             this.legend.append('text')
@@ -110,6 +112,49 @@ class LandingsPie {
             .attr("dominant-baseline", "middle");
         }
 
+    }
+    
+    renderAnnotations() {
+        this.svg.selectAll(".annotations").remove();
+    
+        if (this.supperclassCounts.length > 0) {
+            const largestCategory = this.supperclassCounts[0].superclass;
+            this.annotateSuperclass(largestCategory, `Percent ${this.supperclassCounts[0].percent}%`,true);
+        }
+    }
+
+    annotateSuperclass(superclass, label, permanent=false) {
+        const slice = this.svg.select(`path[slice-id="${superclass}"]`);
+        const sliceBounds = slice.node().getBBox();
+        const annotationX = sliceBounds.x + sliceBounds.width / 2;
+        const annotationY = sliceBounds.y + sliceBounds.height / 2;
+        const annotation = [
+            {
+                note: {
+                    title: `${superclass}`,
+                    label: label,
+                    align: (annotationX > 0) ? "left" : "right"
+                },
+                type: d3.annotationCallout,
+                color: ["#000000"],
+                x: annotationX,
+                y: annotationY,
+                dx: (annotationX > 0) ? 150: -150,
+                dy: -50,
+                subject: {
+                    radius: 10,
+                    radiusPadding: 10
+                }
+            }
+        ];
+
+        const makeAnnotations = d3.annotation().annotations(annotation);
+        this.svg.append("g").attr("class", permanent ? "permanent-annotations" : "user-annotations").call(makeAnnotations);
+
+        d3.selectAll('.annotation-note')
+            .style('fill', 'black')
+            .style('font-weight', 'bold')
+            .raise();
     }
     
     
@@ -128,12 +173,10 @@ class LandingsPie {
         // Init to Illinois
         this.updateData(defaultSelectedState);
 
-        // Add controls
         const dropdown = d3.select("#controls")
             .append("select")
             .attr('id', 'stateSelector');
 
-        // Add options to the dropdown
         dropdown.selectAll("option")
             .data(this.stateNames)
             .enter()
@@ -165,6 +208,11 @@ class LandingsPie {
 
         legendItem.select(`text`)
             .style("font-weight", "bold");
+
+        if (this.supperclassCounts[0].superclass !== superclass) {
+            const superclassData = this.supperclassCounts.find(item => item.superclass === superclass);
+            this.annotateSuperclass(superclass, `Percent ${superclassData.percent}%`);
+        }
     }
 
     // Function to revert pie-elements from "select"
@@ -180,6 +228,7 @@ class LandingsPie {
 
         legendItem.select('text')
             .style("font-weight", "normal");
+        this.svg.selectAll(".user-annotations").remove();
     }
 
 

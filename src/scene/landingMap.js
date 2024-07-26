@@ -241,7 +241,7 @@ class LandingsMap {
         color: ["#000000"],
         x: smallestCoords[0],
         y: smallestCoords[1],
-        dx: 100,
+        dx: -100,
         dy: 50,
         subject: {
           radius: 10,

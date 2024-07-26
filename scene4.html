@@ -1,38 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Narrative Visualization</title>
-        <!-- Include Allowed Dependencies -->
-        <script src="https://d3js.org/d3.v6.min.js"></script>    
-        <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
-        <script src="https://unpkg.com/topojson@3"></script>
-        <link rel="stylesheet" type="text/css" href="src/styles/styles.css">
-        <script>
-            const scene = 4;
-        </script>
-    </head>
-    <body>
-        <div class="viz">
-            <!-- Control Pane -->
-            <div class="nav-pane">
-                <div class="nav">
-                    <div id="selector"></div>
-                </div>
-                <div id="controls" class="controls">
-                </div>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Narrative Visualization</title>
+    <!-- Include Allowed Dependencies -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <link rel="stylesheet" type="text/css" href="src/styles/styles.css">
+    <script>
+        const scene = 4;
+    </script>
+</head>
+
+<body>
+    <div class="viz">
+        <!-- Control Pane -->
+        <div class="nav-pane">
+            <div class="nav">
+                <div id="selector"></div>
             </div>
-            <!-- Text & Content -->
-            <div class="content">
-                <div class="text">
-                    TODO
-                </div>
-                <div class="visualization">
-                    <div id="tooltip" class="hidden"><span></span></div>
-                    <svg id="map"></svg>
-                </div>
+            <div id="controls" class="controls">
+            </div>
+        </div>
+        <!-- Text & Content -->
+        <div class="content">
+            <div class="text">
+                As an Illinois resident, it's quite sad to see just eight reported landings for my home state. That said, I'm quite proud of those eight landings. Taking a look back at scene two, one landed right next to me in Bloomington, IL in 1938. That's just a short trip over from UIUC!
+                </br></br>
+                But landings themselves don't tell the whole picture. We can dive one step deeper into each state's meteorite discoveries. On this page, we'll take a look at the breakdown of meteorite classifications for each US continental state. In the controls section, a dropdown is provided to allow selecting between different states. By default, you should see Illinois!
+                </br></br>
+                There are many different categories of meteorites, but for this data, those categories have been compressed into just eight. Descriptions for each of these categories are provided in the sections below. All sources are quoted. My personal knowledge is limited, with the descriptions formed as summation quotes from each class's sources.
+                </br></br>
+                Try exploring each state to see if you can find the rarer forms of meteorites. For example, try taking a look at Texas. As we have seen in the previous scenes, there are quite a few landings throughout the state!
+                </br></br>
+                Classes:
+                <details>
+                    <summary>Ordinary Chondrites (OC)</summary>
+                    <blockquote>
+                        Ordinary Chondrites are the most basic and common meteorite class. They have not been modified or melted from their original formation from dust and small grains in the early solar system. They can tell us a lot about the formation of the solar system.<br>
+                        <cite><a href="https://en.wikipedia.org/wiki/Chondrite" target="_blank">1</a>, <a href="https://www.nhm.ac.uk/discover/types-of-meteorites.html" target="_blank">2</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Iron Meteorites</summary>
+                    <blockquote>
+                        Iron Meteorites (also known as Ferrous Meteorites) contain an overwhelming amount of meteoric iron. Most originate from the cores of planetesimals. These meteorites were some of the earliest sources of iron available to humans!<br>
+                        <cite><a href="https://en.wikipedia.org/wiki/Iron_meteorite" target="_blank">1</a>, <a href="https://www.nhm.ac.uk/discover/types-of-meteorites.html" target="_blank">2</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Pallasites</summary>
+                    <blockquote>
+                        Pallasites are known for their large olivine crystals and stunning effects when lit. Some scientists believe their crystals are formed from the mantle and core material from solar objects which were destroyed through violent collisions during the formation of the solar system. Others believe they formed in melted asteroids similarly to iron meteorites.<br>
+                        <cite><a href="https://en.wikipedia.org/wiki/Pallasite" target="_blank"></a>1</a>, <a href="https://www.nhm.ac.uk/discover/types-of-meteorites.html" target="_blank">2</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Mesosiderites</summary>
+                    <blockquote>
+                        Mesosiderite meteorites are a rare type of meteorite consisting of about equal parts nickel-iron and silicate. Only 7 falls have been observed. Similar to Enstatite Chondrites, the asteroid 16 Psyche is thought to be their parent body, and spectral analysis confirms their broader source as the Maria Asteroid Family.<br>
+                        <cite><a href="https://www.nhm.ac.uk/discover/types-of-meteorites.html" target="_blank">1</a>, <a href="https://en.wikipedia.org/wiki/Mesosiderite" target="_blank">2</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Enstatite Chondrites (E)</summary>
+                    <blockquote>
+                        Only about 200 Enstatite Chondrites are known. They are extremely chemically reduced and tend to contain a lot of enstatite, hence their name. It is suspected that the asteroid 16 Psyche could be the common parent for this type of meteorite.<br>
+                        <cite><a href="https://en.wikipedia.org/wiki/Enstatite_chondrite" target="_blank">1</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Carbonaceous Chondrites (C)</summary>
+                    <blockquote>
+                        Carbonaceous Chondrites contain a high amount of carbon in the form of graphite, carbonates, and organic compounds. They contain high levels of water and minerals that have been impacted by water's presence. They are theorized to have played a role in bringing life to Earth and some even contain nanometer-sized diamonds!<br>
+                        <cite><a href="https://en.wikipedia.org/wiki/Carbonaceous_chondrite" target="_blank">1</a>, <a href="https://www.nhm.ac.uk/discover/types-of-meteorites.html" target="_blank">2</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Achondrites (A)</summary>
+                    <blockquote>
+                        Achondrites are meteorites from asteroids, Mars, and the Moon. They are igneous and do not contain chondrules but, instead, were formed from igneous processes similar to magma. They originate from the Moon, Mars, and asteroids.<br>
+                        <cite><a href="https://en.wikipedia.org/wiki/Achondrite" target="_blank">1</a>, <a href="https://www.nhm.ac.uk/discover/types-of-meteorites.html" target="_blank">2</a></cite>
+                    </blockquote>
+                </details>
+
+                <details>
+                    <summary>Rumuruti Chondrites (R)</summary>
+                    <blockquote>
+                        Rumuruti Chondrites are named after the region of Kenya where they were first discovered. These Chondrites are rare and offer great value to scientists by containing sulfide chondrules that were formed in the beginnings of our solar system. These chondrules could give insights into how our solar system's planets came to be.<br>
+                        <cite><a href="https://aerolite.org/rumuruti-meteorites/" target="_blank">1</a></cite>
+                    </blockquote>
+                </details>
+            </div>
+
+            <div class="visualization">
+                <div id="tooltip" class="hidden"><span></span></div>
+                <svg id="map"></svg>
+            </div>
         </div>
         <!-- Load Custom Scripts -->
         <script type="module" src="/src/orchestrator.js"></script>
-    </body>
+</body>
+
 </html>

@@ -24,10 +24,21 @@
             </div>
             <!-- Text & Content -->
             <div class="content">
-                <div class="text">TODO</div>
+                <div class="text">
+                    Hello and welcome to my <strong>CS 416 Narrative Visualization project</strong>! This project's goal is to take you on a journey through our current global collection of meteorite landing records. 
+                    </br></br>
+                    The data for this project was sourced through <a href="https://data.nasa.gov/Space-Science/Meteorite-Landings/gh4g-9sfh/about_data" target="_blank">NASA's Open Data Portal</a>, with supplemental fields derived through the utility functions available in this project's <a href="https://github.com/Brandon-Galloway/meteorite-visualization/blob/master/src/utils/dataUtils.js" target="_blank">open source code</a>. Additional geojson data was acquired through <a href="https://d3js.org/world-110m.v1.json" target="_blank">d3</a> and <a href="https://gist.github.com/ramnathv/7270397" target="_blank">here</a>.
+                    </br></br>
+                    A navigation tool is available above with arrows to progress or return to a previous scene. Selecting a specific scene number will take you directly to that scene, and the current scene will be highlighted at all times. Additional controls may become available for the current scene directly to the right of the tool. Feel free to adjust these controls to your liking and dive into the data! Default animations will play on page selection but can be paused or resumed from any point.
+                    </br></br>
+                    Thank you for your interest in my project. I hope you enjoy!
+                    </br></br>
+                    - Brandon Galloway
+                  </div>
                 <div class="visualization">
                     <div id="tooltip" class="hidden"><span></span></div>
-                    <svg id="map"><g></g></svg>
+                    <!-- <svg id="map"><g></g></svg> -->
+                    <button id="intro-button" onclick="window.location.href='scene2.html'">Start!</button>
                 </div>
         </div>
         <!-- Load Custom Scripts -->

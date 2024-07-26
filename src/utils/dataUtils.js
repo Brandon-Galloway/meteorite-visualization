@@ -157,4 +157,4 @@ async function addDerrivedColumns(downloadFile=false) {
 }
 
 // Export functions for module use
-export { loadGeoData, loadMeteoriteData, loadUSGeoData, csvToGeoJSON, loadClassMappings };
+export { loadGeoData, loadMeteoriteData, loadUSGeoData, loadClassMappings };

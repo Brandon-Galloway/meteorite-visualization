@@ -1,38 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Narrative Visualization</title>
-        <!-- Include Allowed Dependencies -->
-        <script src="https://d3js.org/d3.v6.min.js"></script>    
-        <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
-        <script src="https://unpkg.com/topojson@3"></script>
-        <link rel="stylesheet" type="text/css" href="src/styles/styles.css">
-        <script>
-            const scene = 5;
-        </script>
-    </head>
-    <body>
-        <div class="viz">
-            <!-- Control Pane -->
-            <div class="nav-pane">
-                <div class="nav">
-                    <div id="selector"></div>
-                </div>
-                <div id="controls" class="controls">
-                </div>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Narrative Visualization</title>
+    <!-- Include Allowed Dependencies -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://rawgit.com/susielu/d3-annotation/master/d3-annotation.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+    <link rel="stylesheet" type="text/css" href="src/styles/styles.css">
+    <script>
+        const scene = 5;
+    </script>
+</head>
+
+<body>
+    <div class="viz">
+        <!-- Control Pane -->
+        <div class="nav-pane">
+            <div class="nav">
+                <div id="selector"></div>
             </div>
-            <!-- Text & Content -->
-            <div class="content">
-                <div class="text">
-                    TODO
-                </div>
-                <div class="visualization">
-                    <div id="tooltip" class="hidden"><span></span></div>
-                    <svg id="map"></svg>
-                </div>
+            <div id="controls" class="controls">
+            </div>
+        </div>
+        <!-- Text & Content -->
+        <div class="content">
+            <div class="text">
+                We've reached the end of our journey through the world of meteorites! From global impacts to the classes of meteorites that have landed in your home state, I hope you've found some interesting facts about the meteorites that have landed on our blue dot in the Milky Way.
+                </br></br>
+                Thank you again for taking the time to visit my site and explore this project. Feel free to hit the button to your right to restart from the beginning or use the navigation tool in the top left to return to an earlier point.
+                </br></br>
+                Next time you visit a museum, I hope you'll find an interesting assortment of meteorites from the types we've covered today!
+                <br><br>
+                - Brandon Galloway
+            </div>
+            <div class="visualization">
+                <button id="intro-button" onclick="window.location.href='index.html'">Again!</button>
+            </div>
         </div>
         <!-- Load Custom Scripts -->
         <script type="module" src="/src/orchestrator.js"></script>
-    </body>
+</body>
+
 </html>

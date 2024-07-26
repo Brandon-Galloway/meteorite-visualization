@@ -17,8 +17,102 @@ class LandingsPie {
             ([superclass, count]) => ({ superclass, count })
         );
         this.supperclassCounts.sort((a, b) => b.count - a.count);
+        this.renderPieChart();
     }
 
+    renderPieChart() {
+        this.container.selectAll("g").remove();
+        const container = this.container.node();
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        this.svg = d3.select(`#${this.containerId}`)
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // Create a legend
+        this.legend = this.container.append("g")
+        .attr("transform", `translate(${10}, ${20})`);
+    
+        // Init Pie
+        if(this.supperclassCounts.length > 0) {
+            const pie = d3.pie().value(m => m.count);
+            const color = d3.scaleOrdinal().domain(this.supperclassCounts.map(m => m.superclass)).range(d3.schemeCategory10);
+            const arcDef = d3.arc().innerRadius(0).outerRadius(Math.min(width, height) / 2 - 100);
+    
+            // Render slices
+            const slices = this.svg.selectAll('path')
+                .data(pie(this.supperclassCounts))
+                .enter()
+                .append('path')
+                .attr('d', arcDef)
+                .attr('fill', m => color(m.data.superclass))
+                .attr('slice-id', m => m.data.superclass)
+                .attr("stroke", "white")
+                .style("stroke-width", ".5")
+                .style("opacity", 0.7)
+                .on('mouseover', function (event, m) {
+                    const superclass = m.data.superclass;
+                    this.select(superclass);
+                }.bind(this))
+                .on('mouseout', function (event, m) {
+                    const superclass = m.data.superclass;
+                    this.deselect(superclass);
+                }.bind(this));
+    
+            const legendItems = this.legend.selectAll('g')
+                .data(this.supperclassCounts)
+                .enter()
+                .append('g')
+                .attr("class", "legend-item")
+                .attr('legend-id', m => m.superclass)
+                .attr("transform", (d, i) => `translate(0, ${i * 20})`);
+    
+            legendItems
+                .append('rect')
+                .attr("x", 0)
+                .attr("width", 15)
+                .attr("height", 15)
+                .style("fill", m => color(m.superclass))
+                .style("stroke", "none")
+                .on('mouseover', function (event, m) {
+                    const superclass = m.superclass;
+                    this.select(superclass);
+                }.bind(this))
+                .on('mouseout', function (event, m) {
+                    const superclass = m.superclass;
+                    this.deselect(superclass);
+                }.bind(this));
+    
+            legendItems.append('text')
+                .attr("x", 20)
+                .attr("y", 12)
+                .text(d => d.superclass)
+                .style("font-size", "12px")
+                .on('mouseover', function (event, m) {
+                    const superclass = m.superclass;
+                    this.select(superclass);
+                }.bind(this))
+                .on('mouseout', function (event, m) {
+                    const superclass = m.superclass;
+                    this.deselect(superclass);
+                }.bind(this));
+        } else {
+            // If no data is available. Print a message instead
+            this.legend.append('text')
+            .attr("x", width / 2)
+            .attr("y", height / 2)
+            .text(d => "No Data Available")
+            .style("font-size", "64px")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle");
+        }
+
+    }
+    
+    
 
 
     async initialize() {
@@ -27,88 +121,34 @@ class LandingsPie {
         const height = container.clientHeight;
 
         this.geoData = await dataUtils.loadMeteoriteData();
-        const countriesGeoJSON = await d3.json('data/gz_2010_us_040_00_500k.json');
-        this.usGeoJSON = {
-            type: "FeatureCollection",
-            features: countriesGeoJSON.features.filter(feature => feature.properties.NAME !== "Alaska" && feature.properties.NAME !== "Hawaii" && feature.properties.NAME !== "Puerto Rico")
-        };
+        const usGeoData = await dataUtils.loadUSGeoData();
+        this.stateNames = usGeoData.features.map(feature => feature.properties.NAME.toLowerCase().replace(/ /g, '-'));
+        this.stateNames.sort((a, b) => a > b);
+        const defaultSelectedState = 'illinois';
+        // Init to Illinois
+        this.updateData(defaultSelectedState);
 
-        // TODO add a UI selector
-        this.updateData('california');
+        // Add controls
+        const dropdown = d3.select("#controls")
+            .append("select")
+            .attr('id', 'stateSelector');
 
-
-        this.svg = this.container
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", `translate(${width / 2}, ${height / 2})`);
-
-        // Init Pie
-        const pie = d3.pie().value(m => m.count);
-        const color = d3.scaleOrdinal().domain(this.supperclassCounts.map(m => m.superclass)).range(d3.schemeCategory10);
-        const arcDef = d3.arc().innerRadius(0).outerRadius(Math.min(width, height) / 2 - 100);
-
-        // Render slices
-        const slices = this.svg.selectAll('path')
-            .data(pie(this.supperclassCounts))
+        // Add options to the dropdown
+        dropdown.selectAll("option")
+            .data(this.stateNames)
             .enter()
-            .append('path')
-            .attr('d', arcDef)
-            .attr('fill', m => color(m.data.superclass))
-            .attr('slice-id', m => m.data.superclass)
-            .attr("stroke", "white")
-            .style("stroke-width", ".5")
-            .style("opacity", 0.7)
-            .on('mouseover', function (event, m) {
-                const superclass = m.data.superclass;
-                this.select(superclass);
-            }.bind(this))
-            .on('mouseout', function (event, m) {
-                const superclass = m.data.superclass;
-                this.deselect(superclass);
-            }.bind(this));
-
-        // Create a legend
-        this.legend = this.container.append("g")
-            .attr("transform", `translate(${10}, ${20})`);
-
-        const legendItems = this.legend.selectAll('g')
-            .data(this.supperclassCounts)
-            .enter()
-            .append('g')
-            .attr("class", "legend-item")
-            .attr('legend-id', m => m.superclass)
-            .attr("transform", (d, i) => `translate(0, ${i * 20})`);
-
-        legendItems
-            .append('rect')
-            .attr("x", 0)
-            .attr("width", 15)
-            .attr("height", 15)
-            .style("fill", m => color(m.superclass))
-            .style("stroke", "none")
-            .on('mouseover', function (event, m) {
-                const superclass = m.superclass;
-                this.select(superclass);
-            }.bind(this))
-            .on('mouseout', function (event, m) {
-                const superclass = m.superclass;
-                this.deselect(superclass);
-            }.bind(this));
-
-        legendItems.append('text')
-            .attr("x", 20)
-            .attr("y", 12)
-            .text(d => d.superclass)
-            .style("font-size", "12px")
-            .on('mouseover', function (event, m) {
-                const superclass = m.superclass;
-                this.select(superclass);
-            }.bind(this))
-            .on('mouseout', function (event, m) {
-                const superclass = m.superclass;
-                this.deselect(superclass);
-            }.bind(this));
+            .append("option")
+            .attr("value", d => d)
+            .text(d => d.replace(/\b\w/g, function(char) {
+                return char.toUpperCase();
+            }))
+            .attr('selected', d => d === defaultSelectedState ? true : null);
+        
+        // Add an event listener to handle change events
+        dropdown.on("change", function (event) {
+            const selectedState = d3.select("#stateSelector").property("value");
+            this.updateData(selectedState);
+        }.bind(this));
     }
 
     // Function to highlight relevant pie-elements

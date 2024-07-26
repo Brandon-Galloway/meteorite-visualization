@@ -115,7 +115,6 @@ class USLandingsMap {
     this.svg = baseMap.g;
       
     // TODO attempt to cleanup this mess!
-    this.stateNames = baseMap.usGeoJSON.features.map(feature => feature.properties.NAME);
     this.svg.selectAll(".state-outline")
     .on("mouseover", function(event, d) {
       // Parse the selected state
